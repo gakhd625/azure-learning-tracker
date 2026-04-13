@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: 'Syne', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0a0f1a;
+  color: #e2e8f0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f1623;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e2c4a;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #378add;
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid #378add;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Textarea and input resets */
+textarea, input {
+  font-family: var(--font-sans);
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, #378add 0%, #5dcaa5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .card-hover {
+    transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  }
+  .card-hover:hover {
+    border-color: #378add;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(55, 138, 221, 0.12);
+  }
+
+  .glow-azure {
+    box-shadow: 0 0 20px rgba(55, 138, 221, 0.2);
+  }
+}
