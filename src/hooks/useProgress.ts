@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createEmptyDayProgress, DayProgress, ProgressStore } from '@/lib/progress'
+import { createEmptyDayProgress, DayProgress, ProgressStore, rowToDayProgress } from '@/lib/progress'
 
 const defaultDayProgress = createEmptyDayProgress
 
@@ -43,12 +43,11 @@ export function useProgress() {
 
       const data = await response.json()
       if (data.entry) {
+        // Convert the database row back to client field names
+        const savedProgress = rowToDayProgress(data.entry)
         setProgress(current => ({
           ...current,
-          [day]: {
-            ...(current[day] ?? nextDayProgress),
-            createdAt: data.entry.created_at,
-          },
+          [day]: savedProgress,
         }))
       }
     } catch {
