@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { CATEGORY_META, type DayData } from '@/data/roadmap'
-import type { DayProgress } from '@/hooks/useProgress'
+import type { DayProgress } from '@/lib/progress'
 
 interface DayCardProps {
   day: DayData

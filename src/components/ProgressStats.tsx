@@ -1,6 +1,6 @@
 'use client'
 
-import type { ProgressStore } from '@/hooks/useProgress'
+import type { ProgressStore } from '@/lib/progress'
 
 interface ProgressStatsProps {
   progress: ProgressStore
