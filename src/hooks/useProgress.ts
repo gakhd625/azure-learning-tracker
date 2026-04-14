@@ -12,13 +12,24 @@ export function useProgress() {
   useEffect(() => {
     const loadProgress = async () => {
       try {
+        console.log('[Hook] Loading progress from API...')
         const response = await fetch('/api/progress', { cache: 'no-store' })
-        if (!response.ok) return
+        if (!response.ok) {
+          console.error('[Hook] Load failed:', response.status)
+          return
+        }
 
         const data = await response.json()
-        setProgress((data.entries ?? {}) as ProgressStore)
-      } catch {
+        console.log('[Hook] Received from API:', data)
+        const store = (data.entries ?? {}) as ProgressStore
+        console.log('[Hook] Parsed store keys:', Object.keys(store))
+        if (store[2]) {
+          console.log('[Hook] Day 2 data:', store[2])
+        }
+        setProgress(store)
+      } catch (error) {
         // Leave the tracker usable even if the API request fails.
+        console.error('[Hook] Load exception:', error)
       } finally {
         setLoaded(true)
       }
@@ -28,6 +39,7 @@ export function useProgress() {
   }, [])
 
   const saveDay = async (day: number, nextDayProgress: DayProgress, nextStore: ProgressStore) => {
+    console.log('[Hook] Saving day', day, 'with:', nextDayProgress)
     setProgress(nextStore)
 
     try {
@@ -39,19 +51,26 @@ export function useProgress() {
         body: JSON.stringify({ day, ...nextDayProgress }),
       })
 
-      if (!response.ok) return
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('[Hook] Save failed:', response.status, errorText)
+        return
+      }
 
       const data = await response.json()
+      console.log('[Hook] Save response:', data)
       if (data.entry) {
         // Convert the database row back to client field names
         const savedProgress = rowToDayProgress(data.entry)
+        console.log('[Hook] Converted progress:', savedProgress)
         setProgress(current => ({
           ...current,
           [day]: savedProgress,
         }))
       }
-    } catch {
+    } catch (error) {
       // The local state is already updated, so the UI stays usable offline.
+      console.error('[Hook] Save exception:', error)
     }
   }
 

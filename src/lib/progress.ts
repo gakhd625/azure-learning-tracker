@@ -39,6 +39,7 @@ export const rowToDayProgress = (row: ProgressEntryRow): DayProgress => ({
 })
 
 export const rowsToProgressStore = (rows: ProgressEntryRow[]): ProgressStore => {
+  console.log('[Progress] rowsToProgressStore received', rows.length, 'rows:', rows.map(r => ({ day: r.day, what_learned: r.what_learned })))
   return rows.reduce<ProgressStore>((store, row) => {
     store[row.day] = rowToDayProgress(row)
     return store
