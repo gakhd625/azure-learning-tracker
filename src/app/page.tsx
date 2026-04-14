@@ -98,7 +98,7 @@ export default function Home() {
         {/* Footer */}
         <footer className="border-t border-surface-700 pt-6 mt-4 text-center">
           <p className="text-xs text-slate-600 font-mono">
-            built with Next.js + Tailwind · progress stored in localStorage
+            built with Next.js + Tailwind · progress stored in Supabase
           </p>
         </footer>
       </div>

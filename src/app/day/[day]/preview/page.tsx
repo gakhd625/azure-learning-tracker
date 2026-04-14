@@ -66,6 +66,11 @@ export default function DayPreviewPage() {
           <p className="text-sm text-slate-400">
             Long-form view for reviewing your saved learning notes and references.
           </p>
+          {progress.createdAt && (
+            <p className="mt-3 text-xs font-mono text-slate-500">
+              Saved on {new Date(progress.createdAt).toLocaleString()}
+            </p>
+          )}
         </header>
 
         <div className="space-y-8">

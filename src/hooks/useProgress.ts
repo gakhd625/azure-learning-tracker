@@ -1,45 +1,59 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createEmptyDayProgress, DayProgress, ProgressStore } from '@/lib/progress'
 
-export interface DayProgress {
-  status: 'not-started' | 'in-progress' | 'done'
-  tasks: Record<string, boolean>
-  notes: string
-  docLink: string
-  learnedSummary: string
-  completedAt?: string
-}
-
-export type ProgressStore = Record<number, DayProgress>
-
-const STORAGE_KEY = 'azure-tracker-progress'
-
-const defaultDayProgress = (): DayProgress => ({
-  status: 'not-started',
-  tasks: {},
-  notes: '',
-  docLink: '',
-  learnedSummary: '',
-})
+const defaultDayProgress = createEmptyDayProgress
 
 export function useProgress() {
   const [progress, setProgress] = useState<ProgressStore>({})
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) setProgress(JSON.parse(stored))
-    } catch {}
-    setLoaded(true)
+    const loadProgress = async () => {
+      try {
+        const response = await fetch('/api/progress', { cache: 'no-store' })
+        if (!response.ok) return
+
+        const data = await response.json()
+        setProgress((data.entries ?? {}) as ProgressStore)
+      } catch {
+        // Leave the tracker usable even if the API request fails.
+      } finally {
+        setLoaded(true)
+      }
+    }
+
+    void loadProgress()
   }, [])
 
-  const save = (next: ProgressStore) => {
-    setProgress(next)
+  const saveDay = async (day: number, nextDayProgress: DayProgress, nextStore: ProgressStore) => {
+    setProgress(nextStore)
+
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-    } catch {}
+      const response = await fetch('/api/progress', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ day, ...nextDayProgress }),
+      })
+
+      if (!response.ok) return
+
+      const data = await response.json()
+      if (data.entry) {
+        setProgress(current => ({
+          ...current,
+          [day]: {
+            ...(current[day] ?? nextDayProgress),
+            createdAt: data.entry.created_at,
+          },
+        }))
+      }
+    } catch {
+      // The local state is already updated, so the UI stays usable offline.
+    }
   }
 
   const getDayProgress = (day: number): DayProgress =>
@@ -48,7 +62,7 @@ export function useProgress() {
   const updateDayProgress = (day: number, updates: Partial<DayProgress>) => {
     const current = getDayProgress(day)
     const next = { ...current, ...updates }
-    save({ ...progress, [day]: next })
+    void saveDay(day, next, { ...progress, [day]: next })
   }
 
   const toggleTask = (day: number, taskId: string, totalTasks: number) => {
@@ -60,8 +74,7 @@ export function useProgress() {
     if (completedCount > 0 && completedCount < totalTasks) status = 'in-progress'
     if (completedCount === totalTasks) status = 'done'
 
-    const completedAt = status === 'done' ? new Date().toISOString() : current.completedAt
-    save({ ...progress, [day]: { ...current, tasks, status, completedAt } })
+    void saveDay(day, { ...current, tasks, status }, { ...progress, [day]: { ...current, tasks, status } })
   }
 
   const completedDays = Object.values(progress).filter(p => p.status === 'done').length
