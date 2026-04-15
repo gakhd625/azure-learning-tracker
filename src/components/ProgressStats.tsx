@@ -25,7 +25,7 @@ export default function ProgressStats({ progress, total }: ProgressStatsProps) {
     <div className="bg-surface-800 border border-surface-600 rounded-2xl p-6 mb-8">
       {/* Top row: stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
-        <Stat label="Completed" value={`${done}/21`} color="text-emerald-400" />
+        <Stat label="Completed" value={`${done}/${total}`} color="text-emerald-400" />
         <Stat label="In Progress" value={String(inProgress)} color="text-amber-400" />
         <Stat label="Remaining" value={String(total - done - inProgress)} color="text-slate-400" />
         <Stat label="Streak" value={`${streak} days`} color="text-azure-400" />

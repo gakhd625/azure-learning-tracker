@@ -6,10 +6,13 @@ import DayCard from '@/components/DayCard'
 import ProgressStats from '@/components/ProgressStats'
 import ActivityGrid from '@/components/ActivityGrid'
 
+const TOTAL_DAYS = ROADMAP_DATA.length
+
 const WEEKS = [
   { week: 1 as const, label: 'Week 1', subtitle: 'Azure Core + Networking + Storage', color: 'text-azure-400' },
   { week: 2 as const, label: 'Week 2', subtitle: 'Identity, Access & Security Hardening', color: 'text-violet-400' },
-  { week: 3 as const, label: 'Week 3', subtitle: 'Security Tools, DevOps & Final Project', color: 'text-emerald-400' },
+  { week: 3 as const, label: 'Week 3', subtitle: 'Zero Trust, NGFW & Security Integration', color: 'text-emerald-400' },
+  { week: 4 as const, label: 'Week 4', subtitle: 'Monitoring, DevOps & Final Project', color: 'text-amber-400' },
 ]
 
 export default function Home() {
@@ -37,7 +40,7 @@ export default function Home() {
             <span className="font-mono text-sm font-medium text-slate-200">azure-tracker</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-mono text-slate-500 hidden sm:block">21-day cloud engineering journey</span>
+            <span className="text-[11px] font-mono text-slate-500 hidden sm:block">{TOTAL_DAYS}-day cloud engineering journey</span>
             <a
               href="https://github.com"
               target="_blank"
@@ -63,15 +66,15 @@ export default function Home() {
             Learning <span className="text-gradient">Tracker</span>
           </h1>
           <p className="text-slate-400 text-sm max-w-md">
-            21-day hands-on roadmap covering Azure fundamentals, Entra ID, security, monitoring, and DevOps.
+            {TOTAL_DAYS}-day hands-on roadmap covering Azure fundamentals, Entra ID, security, monitoring, and DevOps.
           </p>
         </div>
 
         {/* Progress stats */}
-        <ProgressStats progress={progress} total={21} />
+        <ProgressStats progress={progress} total={TOTAL_DAYS} />
 
         {/* Activity grid */}
-        <ActivityGrid progress={progress} total={21} />
+        <ActivityGrid progress={progress} total={TOTAL_DAYS} />
 
         {/* Week sections */}
         {WEEKS.map(({ week, label, subtitle, color }) => {

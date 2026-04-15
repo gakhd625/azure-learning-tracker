@@ -3,10 +3,10 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Azure Learning Tracker',
-  description: '21-day Azure cloud engineering learning journey — identity, security, and DevOps',
+  description: '28-day Azure cloud engineering learning journey — identity, security, and DevOps',
   openGraph: {
     title: 'Azure Learning Tracker',
-    description: '21-day Azure cloud engineering learning journey',
+    description: '28-day Azure cloud engineering learning journey',
     type: 'website',
   },
 }

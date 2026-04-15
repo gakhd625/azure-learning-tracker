@@ -45,7 +45,7 @@ export default function DayPage() {
   const allDone = totalTasks > 0 && completedTasks === totalTasks
 
   const prevDay = dayNum > 1 ? dayNum - 1 : null
-  const nextDay = dayNum < 21 ? dayNum + 1 : null
+  const nextDay = dayNum < ROADMAP_DATA.length ? dayNum + 1 : null
 
   const handleSave = () => {
     updateDayProgress(dayNum, {
