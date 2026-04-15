@@ -17,6 +17,7 @@ export default function DayPage() {
   const [localLink, setLocalLink] = useState('')
   const [localLearned, setLocalLearned] = useState('')
   const [saved, setSaved] = useState(false)
+  const [isPreview, setIsPreview] = useState(false)
 
   useEffect(() => {
     if (!loaded || !dayData) return
@@ -41,6 +42,7 @@ export default function DayPage() {
   const progress = getDayProgress(dayNum)
   const completedTasks = Object.values(progress.tasks).filter(Boolean).length
   const totalTasks = dayData.tasks.length
+  const allDone = totalTasks > 0 && completedTasks === totalTasks
 
   const prevDay = dayNum > 1 ? dayNum - 1 : null
   const nextDay = dayNum < 21 ? dayNum + 1 : null
@@ -53,7 +55,22 @@ export default function DayPage() {
     })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+    // after saving while in edit mode, switch back to preview if all done
+    if (allDone) setIsPreview(true)
   }
+
+  // When tasks flip to all-done, switch to preview automatically
+  useEffect(() => {
+    if (allDone) setIsPreview(true)
+  }, [allDone])
+
+  // Determine effective preview state: if not all done, always show edit
+  const showPreview = allDone && isPreview
+
+  const hasUnsaved =
+    localNotes !== progress.notes ||
+    localLink !== progress.docLink ||
+    localLearned !== progress.learnedSummary
 
   return (
     <main className="min-h-screen bg-surface-900">
@@ -156,75 +173,161 @@ export default function DayPage() {
           </div>
         </Section>
 
-        {/* What I learned */}
-        <Section title="What I Learned" icon="💡">
-          <textarea
-            value={localLearned}
-            onChange={e => setLocalLearned(e.target.value)}
-            placeholder="Summarize what you learned today. What clicked? What was confusing? What would you do differently?"
-            rows={4}
-            className="w-full bg-surface-700 border border-surface-600 rounded-lg px-4 py-3 text-sm text-slate-200 placeholder-slate-600 resize-none focus:border-azure-500 transition-colors outline-none"
-          />
-        </Section>
+        {/* ─── Notes panel with Preview / Edit toggle ─── */}
+        <div className="mb-6 rounded-xl border border-surface-600 bg-surface-800/50 overflow-hidden">
 
-        {/* Documentation link */}
-        <Section title="Documentation Link" icon="🔗">
-          <input
-            type="url"
-            value={localLink}
-            onChange={e => setLocalLink(e.target.value)}
-            placeholder="https://notion.so/... or https://github.com/... or your blog post URL"
-            className="w-full bg-surface-700 border border-surface-600 rounded-lg px-4 py-3 text-sm text-slate-200 placeholder-slate-600 focus:border-azure-500 transition-colors outline-none"
-          />
-          {localLink && (
-            <a
-              href={localLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 mt-2 text-xs text-azure-400 hover:text-azure-200 transition-colors font-mono"
-            >
-              Open link
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-            </a>
-          )}
-        </Section>
+          {/* Panel header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-surface-700">
+            <span className="text-sm font-mono font-medium text-slate-300">
+              {showPreview ? '📄 Day Notes — Preview' : '✏️ Day Notes — Edit'}
+            </span>
 
-        {/* Notes */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="flex items-center gap-2 text-sm font-mono font-medium text-slate-300">
-              <span className="text-base">📝</span>
-              Notes
-            </h2>
-            <Link
-              href={`/day/${dayNum}/preview`}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-surface-600 bg-surface-700 text-xs font-mono text-slate-300 hover:text-slate-100 hover:border-slate-500 transition-colors"
-              aria-label="Open saved documentation preview page"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12z" />
-                <circle cx="12" cy="12" r="2.25" />
-              </svg>
-              Open Preview Page
-            </Link>
+            {allDone ? (
+              /* Toggle pill — only visible when all tasks done */
+              <div className="flex items-center rounded-full border border-surface-600 bg-surface-900 p-0.5 gap-0.5">
+                <button
+                  onClick={() => setIsPreview(true)}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono transition-all duration-200 ${
+                    showPreview
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-700/60'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12z" />
+                    <circle cx="12" cy="12" r="2.25" />
+                  </svg>
+                  Preview
+                </button>
+                <button
+                  onClick={() => setIsPreview(false)}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono transition-all duration-200 ${
+                    !showPreview
+                      ? 'bg-azure-500/20 text-azure-300 border border-azure-700/60'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 3.487a2.25 2.25 0 113.182 3.182L7.5 19.213l-4.5 1.125 1.125-4.5L16.862 3.487z" />
+                  </svg>
+                  Edit
+                </button>
+              </div>
+            ) : (
+              /* Hint badge when tasks are still in progress */
+              <span className="text-[10px] font-mono text-slate-600 border border-surface-600 rounded-full px-2 py-0.5">
+                preview unlocks when all tasks done
+              </span>
+            )}
           </div>
 
-          <textarea
-            value={localNotes}
-            onChange={e => setLocalNotes(e.target.value)}
-            placeholder="Any extra notes, commands you ran, issues you hit, resources you found useful..."
-            rows={5}
-            className="w-full bg-surface-700 border border-surface-600 rounded-lg px-4 py-3 text-sm text-slate-200 placeholder-slate-600 resize-none focus:border-azure-500 transition-colors outline-none font-mono"
-          />
+          {/* Panel body */}
+          <div className="px-4 py-5 space-y-5">
+            {showPreview ? (
+              /* ── PREVIEW MODE ── */
+              <>
+                <PreviewField label="💡 What I Learned">
+                  <p className="text-slate-300 whitespace-pre-wrap break-words leading-relaxed text-sm">
+                    {progress.learnedSummary || <span className="text-slate-600 italic">No summary saved yet.</span>}
+                  </p>
+                </PreviewField>
 
-          {localNotes !== progress.notes && (
-            <p className="mt-2 text-[11px] font-mono text-amber-400">Unsaved note changes</p>
+                <PreviewField label="🔗 Documentation Link">
+                  {progress.docLink ? (
+                    <a
+                      href={progress.docLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-azure-400 hover:text-azure-200 transition-colors break-all text-sm"
+                    >
+                      {progress.docLink}
+                    </a>
+                  ) : (
+                    <span className="text-slate-600 italic text-sm">No link saved yet.</span>
+                  )}
+                </PreviewField>
+
+                <PreviewField label="📝 Notes">
+                  <p className="text-slate-300 whitespace-pre-wrap break-words leading-relaxed text-sm font-mono">
+                    {progress.notes || <span className="text-slate-600 italic font-sans">No notes saved yet.</span>}
+                  </p>
+                </PreviewField>
+              </>
+            ) : (
+              /* ── EDIT MODE ── */
+              <>
+                <div>
+                  <label className="block text-xs font-mono text-slate-400 mb-2">💡 What I Learned</label>
+                  <textarea
+                    value={localLearned}
+                    onChange={e => setLocalLearned(e.target.value)}
+                    placeholder="Summarize what you learned today. What clicked? What was confusing? What would you do differently?"
+                    rows={4}
+                    className="w-full bg-surface-700 border border-surface-600 rounded-lg px-4 py-3 text-sm text-slate-200 placeholder-slate-600 resize-none focus:border-azure-500 transition-colors outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono text-slate-400 mb-2">🔗 Documentation Link</label>
+                  <input
+                    type="url"
+                    value={localLink}
+                    onChange={e => setLocalLink(e.target.value)}
+                    placeholder="https://notion.so/... or https://github.com/... or your blog post URL"
+                    className="w-full bg-surface-700 border border-surface-600 rounded-lg px-4 py-3 text-sm text-slate-200 placeholder-slate-600 focus:border-azure-500 transition-colors outline-none"
+                  />
+                  {localLink && (
+                    <a
+                      href={localLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 mt-2 text-xs text-azure-400 hover:text-azure-200 transition-colors font-mono"
+                    >
+                      Open link
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono text-slate-400 mb-2">📝 Notes</label>
+                  <textarea
+                    value={localNotes}
+                    onChange={e => setLocalNotes(e.target.value)}
+                    placeholder="Any extra notes, commands you ran, issues you hit, resources you found useful..."
+                    rows={5}
+                    className="w-full bg-surface-700 border border-surface-600 rounded-lg px-4 py-3 text-sm text-slate-200 placeholder-slate-600 resize-none focus:border-azure-500 transition-colors outline-none font-mono"
+                  />
+                  {hasUnsaved && (
+                    <p className="mt-2 text-[11px] font-mono text-amber-400">Unsaved changes</p>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Panel footer — save button (only in edit mode) */}
+          {!showPreview && (
+            <div className="flex items-center justify-end px-4 py-3 border-t border-surface-700 bg-surface-900/40">
+              <button
+                onClick={handleSave}
+                className={`
+                  px-5 py-2 text-sm font-mono rounded-lg border transition-all duration-200
+                  ${saved
+                    ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                    : 'bg-azure-500/20 border-azure-500/50 text-azure-300 hover:bg-azure-500/30'
+                  }
+                `}
+              >
+                {saved ? '✓ Saved' : 'Save notes'}
+              </button>
+            </div>
           )}
         </div>
 
-        {/* Save button */}
+        {/* Day navigation footer */}
         <div className="flex items-center justify-between mt-2 mb-10">
           <div className="flex gap-2">
             {prevDay && (
@@ -244,23 +347,13 @@ export default function DayPage() {
               </Link>
             )}
           </div>
-          <button
-            onClick={handleSave}
-            className={`
-              px-5 py-2 text-sm font-mono rounded-lg border transition-all duration-200
-              ${saved
-                ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
-                : 'bg-azure-500/20 border-azure-500/50 text-azure-300 hover:bg-azure-500/30'
-              }
-            `}
-          >
-            {saved ? '✓ Saved' : 'Save notes'}
-          </button>
         </div>
       </div>
     </main>
   )
 }
+
+// ── Helpers ────────────────────────────────────────────────────────────────
 
 function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
   return (
@@ -270,6 +363,17 @@ function Section({ title, icon, children }: { title: string; icon: string; child
         {title}
       </h2>
       {children}
+    </div>
+  )
+}
+
+function PreviewField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-xs font-mono text-slate-500 mb-2">{label}</p>
+      <div className="rounded-lg border border-surface-600 bg-surface-700/40 px-4 py-3">
+        {children}
+      </div>
     </div>
   )
 }
