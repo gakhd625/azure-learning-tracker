@@ -77,9 +77,11 @@ export default function DayPreviewPage() {
           <section>
             <h2 className="text-lg font-semibold text-slate-100 mb-3">What I Learned</h2>
             <div className="rounded-xl border border-surface-600 bg-surface-700/60 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
-              <p className="text-slate-300 whitespace-pre-wrap break-words leading-relaxed">
-                {progress.learnedSummary || 'No learning summary yet.'}
-              </p>
+              {progress.learnedSummary ? (
+                <MarkdownPreview content={progress.learnedSummary} />
+              ) : (
+                <p className="text-slate-300">No learning summary yet.</p>
+              )}
             </div>
           </section>
 
@@ -114,13 +116,90 @@ export default function DayPreviewPage() {
           <section>
             <h2 className="text-lg font-semibold text-slate-100 mb-3">Notes</h2>
             <div className="rounded-xl border border-surface-600 bg-surface-700/60 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
-              <p className="text-slate-300 whitespace-pre-wrap break-words leading-relaxed font-mono">
-                {progress.notes || 'No notes yet.'}
-              </p>
+              {progress.notes ? (
+                <MarkdownPreview content={progress.notes} monospace />
+              ) : (
+                <p className="text-slate-300">No notes yet.</p>
+              )}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-slate-100 mb-3">Quick Actions</h2>
+            <div className="rounded-xl border border-surface-600 bg-surface-700/60 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => void copyDaySummary(dayData.title, dayNum, progress.learnedSummary, progress.docLink, progress.notes)}
+                  className="px-3 py-1.5 text-xs font-mono rounded-md border border-surface-500 text-slate-300 hover:text-slate-100 hover:border-slate-400 transition-colors"
+                >
+                  Copy notes
+                </button>
+                <button
+                  onClick={() => exportDayMarkdown(dayData.title, dayNum, progress.learnedSummary, progress.docLink, progress.notes)}
+                  className="px-3 py-1.5 text-xs font-mono rounded-md border border-surface-500 text-slate-300 hover:text-slate-100 hover:border-slate-400 transition-colors"
+                >
+                  Export .md
+                </button>
+              </div>
             </div>
           </section>
         </div>
       </article>
     </main>
   )
+}
+
+function MarkdownPreview({ content, monospace = false }: { content: string; monospace?: boolean }) {
+  const lines = content.split('\n')
+  return (
+    <div className={`space-y-2 text-sm text-slate-300 leading-relaxed ${monospace ? 'font-mono' : ''}`}>
+      {lines.map((line, idx) => {
+        const trimmed = line.trim()
+        if (!trimmed) return <div key={idx} className="h-2" />
+        if (trimmed.startsWith('# ')) return <h4 key={idx} className="text-base font-semibold text-slate-100">{trimmed.slice(2)}</h4>
+        if (trimmed.startsWith('## ')) return <h5 key={idx} className="text-sm font-semibold text-slate-100">{trimmed.slice(3)}</h5>
+        if (trimmed.startsWith('- ')) return <p key={idx}>• {trimmed.slice(2)}</p>
+        if (trimmed.startsWith('`') && trimmed.endsWith('`') && trimmed.length > 2) {
+          return <code key={idx} className="inline-block rounded bg-surface-800 px-2 py-1 text-xs text-amber-300">{trimmed.slice(1, -1)}</code>
+        }
+        return <p key={idx}>{line}</p>
+      })}
+    </div>
+  )
+}
+
+async function copyDaySummary(title: string, dayNum: number, learnedSummary: string, docLink: string, notes: string) {
+  const text = buildMarkdownSummary(title, dayNum, learnedSummary, docLink, notes)
+  try {
+    await navigator.clipboard.writeText(text)
+  } catch (error) {
+    console.error('Failed to copy notes', error)
+  }
+}
+
+function exportDayMarkdown(title: string, dayNum: number, learnedSummary: string, docLink: string, notes: string) {
+  const content = buildMarkdownSummary(title, dayNum, learnedSummary, docLink, notes)
+  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = `day-${String(dayNum).padStart(2, '0')}-notes.md`
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
+
+function buildMarkdownSummary(title: string, dayNum: number, learnedSummary: string, docLink: string, notes: string) {
+  return [
+    `# Day ${String(dayNum).padStart(2, '0')} - ${title}`,
+    '',
+    '## What I Learned',
+    learnedSummary || '_No summary yet._',
+    '',
+    '## Documentation Link',
+    docLink || '_No link yet._',
+    '',
+    '## Notes',
+    notes || '_No notes yet._',
+    '',
+  ].join('\n')
 }

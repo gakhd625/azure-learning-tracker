@@ -18,6 +18,7 @@ export default function DayPage() {
   const [localLearned, setLocalLearned] = useState('')
   const [saved, setSaved] = useState(false)
   const [isPreview, setIsPreview] = useState(false)
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
 
   useEffect(() => {
     if (!loaded || !dayData) return
@@ -53,6 +54,7 @@ export default function DayPage() {
       docLink: localLink,
       learnedSummary: localLearned,
     })
+    setLastSavedAt(new Date().toISOString())
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
     // after saving while in edit mode, switch back to preview if all done
@@ -71,6 +73,54 @@ export default function DayPage() {
     localNotes !== progress.notes ||
     localLink !== progress.docLink ||
     localLearned !== progress.learnedSummary
+
+  const isLinkValid = !localLink || /^https?:\/\/\S+$/i.test(localLink)
+  const completionPct = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+  const canSave = hasUnsaved && isLinkValid
+
+  useEffect(() => {
+    if (!loaded || !hasUnsaved || !isLinkValid) return
+    const timer = setTimeout(() => {
+      updateDayProgress(dayNum, {
+        notes: localNotes,
+        docLink: localLink,
+        learnedSummary: localLearned,
+      })
+      setLastSavedAt(new Date().toISOString())
+      setSaved(true)
+      setTimeout(() => setSaved(false), 1200)
+    }, 900)
+    return () => clearTimeout(timer)
+  }, [loaded, hasUnsaved, isLinkValid, dayNum, localNotes, localLink, localLearned]) // eslint-disable-line
+
+  useEffect(() => {
+    setLastSavedAt(progress.createdAt ?? null)
+  }, [progress.createdAt])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      const inInput = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')
+      if (inInput && !(event.ctrlKey || event.metaKey)) return
+
+      if (event.key.toLowerCase() === 'p' && allDone) {
+        event.preventDefault()
+        setIsPreview(true)
+      } else if (event.key.toLowerCase() === 'e') {
+        event.preventDefault()
+        setIsPreview(false)
+      } else if (event.key.toLowerCase() === 's' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault()
+        if (canSave) handleSave()
+      } else if (event.key.toLowerCase() === 'n' && nextDay) {
+        event.preventDefault()
+        router.push(`/day/${nextDay}`)
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [allDone, canSave, nextDay, router]) // eslint-disable-line
 
   return (
     <main className="min-h-screen bg-surface-900">
@@ -119,6 +169,11 @@ export default function DayPage() {
             <span className={`text-xs font-mono ${meta.color}`}>· {meta.label}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4">{dayData.title}</h1>
+          <div className="mb-4 rounded-lg border border-surface-600 bg-surface-800/70 px-3 py-2">
+            <p className="text-[11px] font-mono text-slate-300">
+              Daily flow: <span className="text-slate-100">1) Complete tasks</span> -> <span className="text-slate-100">2) Reflect in editor</span> -> <span className="text-slate-100">3) Review in preview</span>
+            </p>
+          </div>
 
           {/* Status bar */}
           <div className="flex items-center gap-3">
@@ -233,9 +288,11 @@ export default function DayPage() {
                 </div>
 
                 <PreviewField label="What I Learned">
-                  <p className="text-slate-300 whitespace-pre-wrap break-words leading-relaxed text-sm">
-                    {progress.learnedSummary || <span className="text-slate-500 italic">No learning summary yet. Add a quick reflection in Edit mode.</span>}
-                  </p>
+                  {progress.learnedSummary ? (
+                    <MarkdownPreview content={progress.learnedSummary} />
+                  ) : (
+                    <span className="text-slate-500 italic text-sm">No learning summary yet. Add a quick reflection in Edit mode.</span>
+                  )}
                 </PreviewField>
 
                 <PreviewField label="Documentation Link">
@@ -264,10 +321,27 @@ export default function DayPage() {
                 </PreviewField>
 
                 <PreviewField label="Notes">
-                  <p className="text-slate-300 whitespace-pre-wrap break-words leading-relaxed text-sm font-mono">
-                    {progress.notes || <span className="text-slate-500 italic font-sans">No notes yet. Add commands, blockers, and references in Edit mode.</span>}
-                  </p>
+                  {progress.notes ? (
+                    <MarkdownPreview content={progress.notes} monospace />
+                  ) : (
+                    <span className="text-slate-500 italic text-sm">No notes yet. Add commands, blockers, and references in Edit mode.</span>
+                  )}
                 </PreviewField>
+
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <button
+                    onClick={() => void copyDaySummary(dayData.title, dayNum, progress.learnedSummary, progress.docLink, progress.notes)}
+                    className="px-3 py-1.5 text-xs font-mono rounded-md border border-surface-500 text-slate-300 hover:text-slate-100 hover:border-slate-400 transition-colors"
+                  >
+                    Copy notes
+                  </button>
+                  <button
+                    onClick={() => exportDayMarkdown(dayData.title, dayNum, progress.learnedSummary, progress.docLink, progress.notes)}
+                    className="px-3 py-1.5 text-xs font-mono rounded-md border border-surface-500 text-slate-300 hover:text-slate-100 hover:border-slate-400 transition-colors"
+                  >
+                    Export .md
+                  </button>
+                </div>
               </>
             ) : (
               /* ── EDIT MODE ── */
@@ -301,6 +375,11 @@ export default function DayPage() {
                     className="w-full bg-surface-700 border border-surface-600 rounded-lg px-4 py-3 text-sm text-slate-200 placeholder-slate-600 focus:border-azure-500 transition-colors outline-none"
                   />
                   {localLink && (
+                    <p className={`mt-2 text-[11px] font-mono ${isLinkValid ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {isLinkValid ? 'Valid URL format' : 'Enter a full URL starting with http:// or https://'}
+                    </p>
+                  )}
+                  {localLink && (
                     <a
                       href={localLink}
                       target="_blank"
@@ -327,6 +406,9 @@ export default function DayPage() {
                   {hasUnsaved && (
                     <p className="mt-2 text-[11px] font-mono text-amber-400">Unsaved changes</p>
                   )}
+                  <p className="mt-2 text-[11px] font-mono text-slate-500">
+                    Prompts: What worked? What blocked you? What should you do first next session?
+                  </p>
                 </div>
               </>
             )}
@@ -337,10 +419,10 @@ export default function DayPage() {
             <div className="flex items-center justify-end px-4 py-3 border-t border-surface-700 bg-surface-900/40">
               <button
                 onClick={handleSave}
-                disabled={!hasUnsaved}
+                disabled={!canSave}
                 className={`
                   px-5 py-2 text-sm font-mono rounded-lg border transition-all duration-200
-                  ${!hasUnsaved && !saved
+                  ${!canSave && !saved
                     ? 'bg-surface-700 border-surface-600 text-slate-500 cursor-not-allowed'
                     : saved
                     ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
@@ -348,10 +430,18 @@ export default function DayPage() {
                   }
                 `}
               >
-                {saved ? 'Saved' : hasUnsaved ? 'Save notes' : 'No changes'}
+                {saved ? 'Saved' : canSave ? 'Save notes' : hasUnsaved ? 'Fix link to save' : 'No changes'}
               </button>
             </div>
           )}
+        </div>
+
+        <div className="mb-8 rounded-lg border border-surface-600 bg-surface-800/60 px-3 py-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-slate-400">
+            <span>{completionPct}% tasks complete</span>
+            <span>{lastSavedAt ? `Last saved ${new Date(lastSavedAt).toLocaleTimeString()}` : 'Not saved yet'}</span>
+            <span>Shortcuts: Ctrl/Cmd+S save, P preview, E edit, N next day</span>
+          </div>
         </div>
 
         {/* Day navigation footer */}
@@ -403,4 +493,59 @@ function PreviewField({ label, children }: { label: string; children: React.Reac
       </div>
     </div>
   )
+}
+
+function MarkdownPreview({ content, monospace = false }: { content: string; monospace?: boolean }) {
+  const lines = content.split('\n')
+  return (
+    <div className={`space-y-2 text-sm text-slate-300 leading-relaxed ${monospace ? 'font-mono' : ''}`}>
+      {lines.map((line, idx) => {
+        const trimmed = line.trim()
+        if (!trimmed) return <div key={idx} className="h-2" />
+        if (trimmed.startsWith('# ')) return <h4 key={idx} className="text-base font-semibold text-slate-100">{trimmed.slice(2)}</h4>
+        if (trimmed.startsWith('## ')) return <h5 key={idx} className="text-sm font-semibold text-slate-100">{trimmed.slice(3)}</h5>
+        if (trimmed.startsWith('- ')) return <p key={idx}>• {trimmed.slice(2)}</p>
+        if (trimmed.startsWith('`') && trimmed.endsWith('`') && trimmed.length > 2) {
+          return <code key={idx} className="inline-block rounded bg-surface-800 px-2 py-1 text-xs text-amber-300">{trimmed.slice(1, -1)}</code>
+        }
+        return <p key={idx}>{line}</p>
+      })}
+    </div>
+  )
+}
+
+async function copyDaySummary(title: string, dayNum: number, learnedSummary: string, docLink: string, notes: string) {
+  const text = buildMarkdownSummary(title, dayNum, learnedSummary, docLink, notes)
+  try {
+    await navigator.clipboard.writeText(text)
+  } catch (error) {
+    console.error('Failed to copy notes', error)
+  }
+}
+
+function exportDayMarkdown(title: string, dayNum: number, learnedSummary: string, docLink: string, notes: string) {
+  const content = buildMarkdownSummary(title, dayNum, learnedSummary, docLink, notes)
+  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = `day-${String(dayNum).padStart(2, '0')}-notes.md`
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
+
+function buildMarkdownSummary(title: string, dayNum: number, learnedSummary: string, docLink: string, notes: string) {
+  return [
+    `# Day ${String(dayNum).padStart(2, '0')} - ${title}`,
+    '',
+    '## What I Learned',
+    learnedSummary || '_No summary yet._',
+    '',
+    '## Documentation Link',
+    docLink || '_No link yet._',
+    '',
+    '## Notes',
+    notes || '_No notes yet._',
+    '',
+  ].join('\n')
 }
