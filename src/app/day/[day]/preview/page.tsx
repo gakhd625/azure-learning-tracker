@@ -61,10 +61,10 @@ export default function DayPreviewPage() {
 
       <article className="max-w-3xl mx-auto px-4 py-8">
         <header className="mb-8 pb-5 border-b border-surface-700">
-          <p className="text-[11px] font-mono uppercase tracking-widest text-slate-500 mb-2">Saved Documentation Preview</p>
+          <p className="text-[11px] font-mono uppercase tracking-widest text-slate-500 mb-2">Saved Notes Preview</p>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">{dayData.title}</h1>
           <p className="text-sm text-slate-400">
-            Long-form view for reviewing your saved learning notes and references.
+            Review your saved learning notes in a clean, read-only format.
           </p>
           {progress.createdAt && (
             <p className="mt-3 text-xs font-mono text-slate-500">
@@ -76,36 +76,46 @@ export default function DayPreviewPage() {
         <div className="space-y-8">
           <section>
             <h2 className="text-lg font-semibold text-slate-100 mb-3">What I Learned</h2>
-            <div className="rounded-xl border border-surface-600 bg-surface-700/60 px-4 py-4">
+            <div className="rounded-xl border border-surface-600 bg-surface-700/60 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
               <p className="text-slate-300 whitespace-pre-wrap break-words leading-relaxed">
-                {progress.learnedSummary || 'No summary saved yet.'}
+                {progress.learnedSummary || 'No learning summary yet.'}
               </p>
             </div>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-slate-100 mb-3">Documentation Link</h2>
-            <div className="rounded-xl border border-surface-600 bg-surface-700/60 px-4 py-4">
+            <div className="rounded-xl border border-surface-600 bg-surface-700/60 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
               {progress.docLink ? (
-                <a
-                  href={progress.docLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-azure-400 hover:text-azure-200 transition-colors break-all"
-                >
-                  {progress.docLink}
-                </a>
+                <div className="flex items-start justify-between gap-3">
+                  <a
+                    href={progress.docLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-azure-400 hover:text-azure-200 transition-colors break-all"
+                  >
+                    {progress.docLink}
+                  </a>
+                  <a
+                    href={progress.docLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 shrink-0 rounded-md border border-surface-500 px-2 py-1 text-[11px] font-mono text-slate-300 hover:text-slate-100 hover:border-slate-400 transition-colors"
+                  >
+                    Open
+                  </a>
+                </div>
               ) : (
-                <p className="text-slate-400">No documentation link saved yet.</p>
+                <p className="text-slate-400">No documentation link yet.</p>
               )}
             </div>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-slate-100 mb-3">Notes</h2>
-            <div className="rounded-xl border border-surface-600 bg-surface-700/60 px-4 py-4">
+            <div className="rounded-xl border border-surface-600 bg-surface-700/60 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
               <p className="text-slate-300 whitespace-pre-wrap break-words leading-relaxed font-mono">
-                {progress.notes || 'No notes saved yet.'}
+                {progress.notes || 'No notes yet.'}
               </p>
             </div>
           </section>

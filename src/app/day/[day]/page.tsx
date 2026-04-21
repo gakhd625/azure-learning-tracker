@@ -174,12 +174,12 @@ export default function DayPage() {
         </Section>
 
         {/* ─── Notes panel with Preview / Edit toggle ─── */}
-        <div className="mb-6 rounded-xl border border-surface-600 bg-surface-800/50 overflow-hidden">
+        <div className="mb-6 rounded-xl border border-surface-600 bg-surface-800/50 overflow-hidden shadow-[0_8px_28px_rgba(0,0,0,0.22)]">
 
           {/* Panel header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-surface-700">
             <span className="text-sm font-mono font-medium text-slate-300">
-              {showPreview ? '📄 Day Notes — Preview' : '✏️ Day Notes — Edit'}
+              {showPreview ? 'Day Notes Preview' : 'Day Notes Editor'}
             </span>
 
             {allDone ? (
@@ -215,8 +215,8 @@ export default function DayPage() {
               </div>
             ) : (
               /* Hint badge when tasks are still in progress */
-              <span className="text-[10px] font-mono text-slate-600 border border-surface-600 rounded-full px-2 py-0.5">
-                preview unlocks when all tasks done
+              <span className="text-[10px] font-mono text-slate-500 border border-surface-600 rounded-full px-2 py-0.5">
+                Complete all tasks to unlock preview mode
               </span>
             )}
           </div>
@@ -226,49 +226,73 @@ export default function DayPage() {
             {showPreview ? (
               /* ── PREVIEW MODE ── */
               <>
-                <PreviewField label="💡 What I Learned">
+                <div className="rounded-lg border border-emerald-800/50 bg-emerald-950/20 px-3 py-2">
+                  <p className="text-[11px] font-mono text-emerald-300">
+                    Read-only mode enabled. Switch back to Edit if you want to change anything.
+                  </p>
+                </div>
+
+                <PreviewField label="What I Learned">
                   <p className="text-slate-300 whitespace-pre-wrap break-words leading-relaxed text-sm">
-                    {progress.learnedSummary || <span className="text-slate-600 italic">No summary saved yet.</span>}
+                    {progress.learnedSummary || <span className="text-slate-500 italic">No learning summary yet. Add a quick reflection in Edit mode.</span>}
                   </p>
                 </PreviewField>
 
-                <PreviewField label="🔗 Documentation Link">
+                <PreviewField label="Documentation Link">
                   {progress.docLink ? (
-                    <a
-                      href={progress.docLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-azure-400 hover:text-azure-200 transition-colors break-all text-sm"
-                    >
-                      {progress.docLink}
-                    </a>
+                    <div className="flex items-start justify-between gap-3">
+                      <a
+                        href={progress.docLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-azure-400 hover:text-azure-200 transition-colors break-all text-sm"
+                      >
+                        {progress.docLink}
+                      </a>
+                      <a
+                        href={progress.docLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 shrink-0 rounded-md border border-surface-500 px-2 py-1 text-[11px] font-mono text-slate-300 hover:text-slate-100 hover:border-slate-400 transition-colors"
+                      >
+                        Open
+                      </a>
+                    </div>
                   ) : (
-                    <span className="text-slate-600 italic text-sm">No link saved yet.</span>
+                    <span className="text-slate-500 italic text-sm">No documentation link yet.</span>
                   )}
                 </PreviewField>
 
-                <PreviewField label="📝 Notes">
+                <PreviewField label="Notes">
                   <p className="text-slate-300 whitespace-pre-wrap break-words leading-relaxed text-sm font-mono">
-                    {progress.notes || <span className="text-slate-600 italic font-sans">No notes saved yet.</span>}
+                    {progress.notes || <span className="text-slate-500 italic font-sans">No notes yet. Add commands, blockers, and references in Edit mode.</span>}
                   </p>
                 </PreviewField>
               </>
             ) : (
               /* ── EDIT MODE ── */
               <>
+                {!allDone && (
+                  <div className="rounded-lg border border-amber-800/40 bg-amber-950/20 px-3 py-2">
+                    <p className="text-[11px] font-mono text-amber-300">
+                      Finish your checklist to unlock full preview mode.
+                    </p>
+                  </div>
+                )}
+
                 <div>
-                  <label className="block text-xs font-mono text-slate-400 mb-2">💡 What I Learned</label>
+                  <label className="block text-xs font-mono text-slate-400 mb-2">What I Learned</label>
                   <textarea
                     value={localLearned}
                     onChange={e => setLocalLearned(e.target.value)}
-                    placeholder="Summarize what you learned today. What clicked? What was confusing? What would you do differently?"
+                    placeholder="Summarize what you learned today. What clicked, what was confusing, and what you'll improve next time."
                     rows={4}
                     className="w-full bg-surface-700 border border-surface-600 rounded-lg px-4 py-3 text-sm text-slate-200 placeholder-slate-600 resize-none focus:border-azure-500 transition-colors outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono text-slate-400 mb-2">🔗 Documentation Link</label>
+                  <label className="block text-xs font-mono text-slate-400 mb-2">Documentation Link</label>
                   <input
                     type="url"
                     value={localLink}
@@ -292,7 +316,7 @@ export default function DayPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono text-slate-400 mb-2">📝 Notes</label>
+                  <label className="block text-xs font-mono text-slate-400 mb-2">Notes</label>
                   <textarea
                     value={localNotes}
                     onChange={e => setLocalNotes(e.target.value)}
@@ -313,15 +337,18 @@ export default function DayPage() {
             <div className="flex items-center justify-end px-4 py-3 border-t border-surface-700 bg-surface-900/40">
               <button
                 onClick={handleSave}
+                disabled={!hasUnsaved}
                 className={`
                   px-5 py-2 text-sm font-mono rounded-lg border transition-all duration-200
-                  ${saved
+                  ${!hasUnsaved && !saved
+                    ? 'bg-surface-700 border-surface-600 text-slate-500 cursor-not-allowed'
+                    : saved
                     ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
                     : 'bg-azure-500/20 border-azure-500/50 text-azure-300 hover:bg-azure-500/30'
                   }
                 `}
               >
-                {saved ? '✓ Saved' : 'Save notes'}
+                {saved ? 'Saved' : hasUnsaved ? 'Save notes' : 'No changes'}
               </button>
             </div>
           )}
@@ -371,7 +398,7 @@ function PreviewField({ label, children }: { label: string; children: React.Reac
   return (
     <div>
       <p className="text-xs font-mono text-slate-500 mb-2">{label}</p>
-      <div className="rounded-lg border border-surface-600 bg-surface-700/40 px-4 py-3">
+      <div className="rounded-lg border border-surface-600 bg-surface-700/40 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
         {children}
       </div>
     </div>
