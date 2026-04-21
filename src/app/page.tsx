@@ -6,6 +6,7 @@ import DayCard from '@/components/DayCard'
 import ProgressStats from '@/components/ProgressStats'
 import ActivityGrid from '@/components/ActivityGrid'
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 
 const TOTAL_DAYS = ROADMAP_DATA.length
 
@@ -77,6 +78,12 @@ export default function Home() {
             <span className="font-mono text-sm font-medium text-slate-200">azure-tracker</span>
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              href="/study"
+              className="px-2 py-1 rounded-md border border-surface-600 text-[11px] font-mono text-slate-300 hover:text-slate-100 hover:border-slate-400 transition-colors"
+            >
+              AI Study
+            </Link>
             <span className="text-[11px] font-mono text-slate-500 hidden sm:block">{TOTAL_DAYS}-day cloud engineering journey</span>
             <a
               href="https://github.com"

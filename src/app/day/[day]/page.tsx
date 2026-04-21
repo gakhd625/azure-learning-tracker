@@ -134,6 +134,12 @@ export default function DayPage() {
             <span className="font-mono text-xs">azure-tracker</span>
           </Link>
           <div className="flex items-center gap-3">
+            <Link
+              href="/study"
+              className="text-slate-500 hover:text-slate-200 transition-colors text-xs font-mono border border-surface-600 rounded-md px-2 py-1"
+            >
+              AI Study
+            </Link>
             {prevDay && (
               <button
                 onClick={() => router.push(`/day/${prevDay}`)}
@@ -171,8 +177,14 @@ export default function DayPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4">{dayData.title}</h1>
           <div className="mb-4 rounded-lg border border-surface-600 bg-surface-800/70 px-3 py-2">
             <p className="text-[11px] font-mono text-slate-300">
-              Daily flow: <span className="text-slate-100">1) Complete tasks</span> -> <span className="text-slate-100">2) Reflect in editor</span> -> <span className="text-slate-100">3) Review in preview</span>
+              Daily flow: <span className="text-slate-100">1) Complete tasks</span> {'->'} <span className="text-slate-100">2) Reflect in editor</span> {'->'} <span className="text-slate-100">3) Review in preview</span>
             </p>
+            <Link
+              href={`/study?day=${dayNum}`}
+              className="inline-flex mt-2 text-[11px] font-mono text-azure-300 hover:text-azure-200 transition-colors"
+            >
+              Generate AI quiz from this day →
+            </Link>
           </div>
 
           {/* Status bar */}

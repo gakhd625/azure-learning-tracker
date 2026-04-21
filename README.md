@@ -11,9 +11,11 @@ A clean, dark-mode dashboard for tracking a 21-day Azure cloud engineering learn
 - 21-day structured roadmap (Azure fundamentals → identity → security → DevOps)
 - Per-day task checklists with auto status updates
 - "What I Learned", notes, and documentation link fields
+- AI quiz generation by topic/tasks (Gemini)
+- Flashcard + MCQ study mode with spaced review scheduling
 - Progress stats dashboard (completed / in-progress / streak)
 - GitHub-style activity grid
-- 100% local storage — no backend, no auth
+- Supabase-backed persistence
 - Fully responsive dark UI
 - Deployable to Vercel with one command
 
@@ -26,7 +28,8 @@ A clean, dark-mode dashboard for tracking a 21-day Azure cloud engineering learn
 | Next.js 14 (App Router) | Framework |
 | TypeScript | Type safety |
 | Tailwind CSS v3 | Styling |
-| localStorage | Persistence |
+| Supabase | Persistence |
+| Gemini API | Quiz generation |
 | Vercel | Deployment |
 
 ---
@@ -48,6 +51,18 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
+
+### 3. Environment variables
+
+Set these in `.env.local`:
+
+```bash
+SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+GEMINI_API_KEY=...
+# Optional:
+GEMINI_MODEL=gemini-1.5-flash
+```
 
 ---
 
